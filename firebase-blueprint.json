@@ -1,0 +1,433 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Private owner profile and workspace root metadata.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 254 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "timezone": { "type": "string", "maxLength": 80 },
+        "currency": { "type": "string", "maxLength": 12 },
+        "theme": { "type": "string", "enum": ["light", "dark"] },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "sourceUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "email", "displayName", "timezone", "currency", "theme", "createdAt", "updatedAt"]
+    },
+    "TradingAccount": {
+      "title": "Trading Account",
+      "description": "Personal trading or prop/brokerage account.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "broker": { "type": "string", "maxLength": 100 },
+        "accountType": { "type": "string", "enum": ["personal", "funded", "demo", "paper"] },
+        "currency": { "type": "string", "maxLength": 12 },
+        "initialBalance": { "type": "number" },
+        "defaultRiskPercent": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "sourceUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "accountType", "currency", "initialBalance", "defaultRiskPercent", "isActive", "createdAt", "updatedAt"]
+    },
+    "DailyJournal": {
+      "title": "Daily Journal",
+      "description": "Day-level preparation, daily checklist, emotional state, and reflection.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 16 },
+        "timezone": { "type": "string", "maxLength": 80 },
+        "plannedActivities": { "type": "string", "maxLength": 4000 },
+        "morningNotes": { "type": "string", "maxLength": 8000 },
+        "dailyEmotionalState": { "type": "string", "maxLength": 120 },
+        "disciplineRating": { "type": "number" },
+        "checklistItems": { "type": "array" },
+        "dailyReflection": { "type": "string", "maxLength": 8000 },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "sourceUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "date", "timezone", "checklistItems", "createdAt", "updatedAt"]
+    },
+    "TradingSession": {
+      "title": "Trading Session",
+      "description": "Independent trading session with attendance, timing, psychology, and lifecycle.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 16 },
+        "sessionName": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "sessionCategory": { "type": "string", "enum": ["standard", "custom"] },
+        "sessionTemplateId": { "type": "string", "maxLength": 128 },
+        "timezone": { "type": "string", "maxLength": 80 },
+        "plannedStart": { "type": "string", "maxLength": 64 },
+        "plannedEnd": { "type": "string", "maxLength": 64 },
+        "actualStart": { "type": "string", "maxLength": 64 },
+        "actualEnd": { "type": "string", "maxLength": 64 },
+        "attendanceStatus": { "type": "string", "enum": ["pending", "attended", "late", "early_exit", "missed", "cancelled"] },
+        "arrivalDelayMinutes": { "type": "number" },
+        "earlyDepartureMinutes": { "type": "number" },
+        "setupAvailability": { "type": "string", "enum": ["unknown", "a_plus", "valid", "mixed", "no_valid_setup"] },
+        "sittingLocation": { "type": "string", "maxLength": 80 },
+        "sittingLocationOther": { "type": "string", "maxLength": 140 },
+        "preSessionEmotion": { "type": "string", "maxLength": 80 },
+        "preSessionEmotionNote": { "type": "string", "maxLength": 500 },
+        "preSessionPreparation": { "type": "string", "maxLength": 4000 },
+        "sessionBias": { "type": "string", "maxLength": 200 },
+        "sessionEmotions": { "type": "array" },
+        "postSessionEmotions": { "type": "array" },
+        "sessionChecklist": { "type": "array" },
+        "sessionNotes": { "type": "string", "maxLength": 8000 },
+        "observations": { "type": "string", "maxLength": 8000 },
+        "steppedBackCount": { "type": "number" },
+        "linkedTradeCount": { "type": "number" },
+        "sessionSummary": { "type": "string", "maxLength": 4000 },
+        "planAdherence": { "type": "string", "enum": ["pending", "followed", "partial", "deviated"] },
+        "closingReflection": { "type": "string", "maxLength": 8000 },
+        "status": { "type": "string", "enum": ["planned", "live", "completed", "missed", "cancelled"] },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "sourceUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "date", "sessionName", "timezone", "attendanceStatus", "status", "steppedBackCount", "linkedTradeCount", "createdAt", "updatedAt"]
+    },
+    "SessionEvent": {
+      "title": "Session Event",
+      "description": "Timestamped observation or action belonging exclusively to one trading session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "sessionId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "eventType": { "type": "string", "maxLength": 80 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "emotion": { "type": "string", "maxLength": 80 },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "timezone": { "type": "string", "maxLength": 80 },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "sessionId", "eventType", "label", "timestamp", "createdAt"]
+    },
+    "Trade": {
+      "title": "Trade",
+      "description": "Independent trade record linked to a session or explicitly marked out-of-session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "tradeGroupId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 16 },
+        "timezone": { "type": "string", "maxLength": 80 },
+        "sessionId": { "type": "string", "maxLength": 128 },
+        "isOutOfSession": { "type": "boolean" },
+        "accountId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "instrument": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "market": { "type": "string", "maxLength": 40 },
+        "direction": { "type": "string", "enum": ["long", "short"] },
+        "status": { "type": "string", "enum": ["before_entry", "during_trade", "closed"] },
+        "bias": { "type": "string", "maxLength": 120 },
+        "timeframe": { "type": "string", "maxLength": 24 },
+        "entryType": { "type": "string", "maxLength": 60 },
+        "setupLabel": { "type": "string", "maxLength": 120 },
+        "entryTimestamp": { "type": "string", "maxLength": 64 },
+        "entryPrice": { "type": "number" },
+        "stopLoss": { "type": "number" },
+        "takeProfit": { "type": "number" },
+        "positionSize": { "type": "number" },
+        "plannedRisk": { "type": "number" },
+        "riskPercent": { "type": "number" },
+        "expectedProfitPercent": { "type": "number" },
+        "actualProfitPercent": { "type": "number" },
+        "tpOutcome": { "type": "string", "enum": ["pending", "hit", "partial", "missed", "not_used"] },
+        "slOutcome": { "type": "string", "enum": ["pending", "hit", "trailed_be", "moved", "not_used"] },
+        "exitOutcome": { "type": "string", "enum": ["take_profit", "stop_loss", "manual_exit", "breakeven"] },
+        "entryReason": { "type": "string", "maxLength": 4000 },
+        "expectedOutcome": { "type": "string", "maxLength": 2000 },
+        "preEntryEmotion": { "type": "string", "maxLength": 80 },
+        "confidence": { "type": "number" },
+        "antiBiasPauseCompleted": { "type": "boolean" },
+        "duringTradeDurationSeconds": { "type": "number" },
+        "exitTimestamp": { "type": "string", "maxLength": 64 },
+        "exitPrice": { "type": "number" },
+        "exitReason": { "type": "string", "maxLength": 2000 },
+        "actualOutcome": { "type": "string", "maxLength": 2000 },
+        "grossPnl": { "type": "number" },
+        "commission": { "type": "number" },
+        "otherCharges": { "type": "number" },
+        "netPnl": { "type": "number" },
+        "realisedR": { "type": "number" },
+        "result": { "type": "string", "enum": ["pending", "win", "loss", "breakeven"] },
+        "postExitEmotions": { "type": "array" },
+        "mistakes": { "type": "array" },
+        "lessons": { "type": "string", "maxLength": 4000 },
+        "disciplineQuestions": { "type": "object" },
+        "attachmentIds": { "type": "array" },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "sourceUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "date", "timezone", "isOutOfSession", "accountId", "instrument", "direction", "status", "result", "createdAt", "updatedAt"]
+    },
+    "TradeEvent": {
+      "title": "Trade Event",
+      "description": "Timestamped execution, adjustment, emotion change, or observation belonging exclusively to one trade.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "tradeId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "phase": { "type": "string", "enum": ["before_entry", "during_trade", "exit"] },
+        "eventType": { "type": "string", "maxLength": 80 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "details": { "type": "string", "maxLength": 2000 },
+        "price": { "type": "number" },
+        "quantity": { "type": "number" },
+        "emotion": { "type": "string", "maxLength": 80 },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "timezone": { "type": "string", "maxLength": 80 },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "tradeId", "phase", "eventType", "label", "timestamp", "createdAt"]
+    },
+    "TradeGroup": {
+      "title": "Trade Group",
+      "description": "Logical grouping of related trades (e.g., scale-ins, campaign, multi-leg play).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "date": { "type": "string", "maxLength": 16 },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "sourceUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "createdAt", "updatedAt"]
+    },
+    "Attachment": {
+      "title": "Attachment",
+      "description": "Screenshot or chart attachment linked to a trade, session, journal, or review.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "entityType": { "type": "string", "enum": ["trade", "session", "daily_journal", "review"] },
+        "entityId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "filename": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "mimeType": { "type": "string", "maxLength": 80 },
+        "sizeBytes": { "type": "number" },
+        "caption": { "type": "string", "maxLength": 500 },
+        "dataUrl": { "type": "string", "maxLength": 900000 },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "entityType", "entityId", "filename", "mimeType", "sizeBytes", "dataUrl", "createdAt"]
+    },
+    "SessionTemplate": {
+      "title": "Session Template",
+      "description": "Reusable trading session configuration with planned start/end and checklist.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "market": { "type": "string", "maxLength": 60 },
+        "plannedStartTime": { "type": "string", "maxLength": 16 },
+        "plannedEndTime": { "type": "string", "maxLength": 16 },
+        "timezone": { "type": "string", "maxLength": 80 },
+        "defaultChecklist": { "type": "array" },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "plannedStartTime", "plannedEndTime", "timezone", "defaultChecklist", "createdAt", "updatedAt"]
+    },
+    "Checklist": {
+      "title": "Checklist",
+      "description": "Configurable daily or session checklist template.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "scope": { "type": "string", "enum": ["daily", "session", "pre_trade"] },
+        "items": { "type": "array" },
+        "isDefault": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "scope", "items", "isDefault", "createdAt", "updatedAt"]
+    },
+    "Instrument": {
+      "title": "Instrument",
+      "description": "Tradable instrument with market classification, tick/pip value, and default charges.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "symbol": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "name": { "type": "string", "maxLength": 100 },
+        "market": { "type": "string", "enum": ["Forex", "Futures", "Indices", "Equities", "Crypto", "Commodities", "Options"] },
+        "tickSize": { "type": "number" },
+        "pointValue": { "type": "number" },
+        "defaultCommission": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "symbol", "market", "isActive", "createdAt", "updatedAt"]
+    },
+    "UserPreferences": {
+      "title": "User Preferences",
+      "description": "Timeframes, setups, emotions, logger presets, and personal preferences.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "timeframes": { "type": "array" },
+        "setupLabels": { "type": "array" },
+        "entryTypes": { "type": "array" },
+        "sessionQuickActions": { "type": "array" },
+        "antiBiasPauseSeconds": { "type": "number" },
+        "defaultAccountId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "timeframes", "setupLabels", "entryTypes", "sessionQuickActions", "antiBiasPauseSeconds", "createdAt", "updatedAt"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Structured daily, weekly, monthly, or strategy performance review.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reviewType": { "type": "string", "enum": ["daily", "weekly", "monthly", "strategy"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "periodStart": { "type": "string", "maxLength": 32 },
+        "periodEnd": { "type": "string", "maxLength": 32 },
+        "strategyName": { "type": "string", "maxLength": 120 },
+        "summary": { "type": "string", "maxLength": 8000 },
+        "tradingMistakes": { "type": "string", "maxLength": 4000 },
+        "lessonsLearned": { "type": "string", "maxLength": 4000 },
+        "behaviouralPatterns": { "type": "string", "maxLength": 4000 },
+        "improvementGoals": { "type": "string", "maxLength": 4000 },
+        "rating": { "type": "number" },
+        "sourceApplication": { "type": "string", "maxLength": 80 },
+        "sourceCreatedAt": { "type": "string", "maxLength": 64 },
+        "sourceUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "reviewType", "title", "periodStart", "periodEnd", "createdAt", "updatedAt"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "Immutable personal audit record for backup exports and data imports.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "action": { "type": "string", "enum": ["export_backup", "export_json", "export_csv", "export_xlsx", "import_preview", "import_commit", "import_rollback", "delete_record"] },
+        "details": { "type": "string", "maxLength": 2000 },
+        "recordCount": { "type": "number" },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "action", "details", "recordCount", "timestamp", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Owner-isolated user profile document."
+    },
+    "/users/{userId}/accounts/{accountId}": {
+      "schema": { "$ref": "#/entities/TradingAccount" },
+      "description": "Personal trading accounts belonging to the user."
+    },
+    "/users/{userId}/daily_journals/{journalId}": {
+      "schema": { "$ref": "#/entities/DailyJournal" },
+      "description": "Day-level journal records belonging to the user."
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/TradingSession" },
+      "description": "Trading sessions belonging to the user."
+    },
+    "/users/{userId}/session_events/{eventId}": {
+      "schema": { "$ref": "#/entities/SessionEvent" },
+      "description": "Session event timeline entries belonging to the user."
+    },
+    "/users/{userId}/trades/{tradeId}": {
+      "schema": { "$ref": "#/entities/Trade" },
+      "description": "Trade records belonging to the user."
+    },
+    "/users/{userId}/trade_events/{eventId}": {
+      "schema": { "$ref": "#/entities/TradeEvent" },
+      "description": "Trade event timeline entries belonging to the user."
+    },
+    "/users/{userId}/trade_groups/{groupId}": {
+      "schema": { "$ref": "#/entities/TradeGroup" },
+      "description": "Trade group records belonging to the user."
+    },
+    "/users/{userId}/attachments/{attachmentId}": {
+      "schema": { "$ref": "#/entities/Attachment" },
+      "description": "Private screenshots and chart attachments belonging to the user."
+    },
+    "/users/{userId}/session_templates/{templateId}": {
+      "schema": { "$ref": "#/entities/SessionTemplate" },
+      "description": "Configured session templates belonging to the user."
+    },
+    "/users/{userId}/checklists/{checklistId}": {
+      "schema": { "$ref": "#/entities/Checklist" },
+      "description": "Configurable checklist templates belonging to the user."
+    },
+    "/users/{userId}/instruments/{instrumentId}": {
+      "schema": { "$ref": "#/entities/Instrument" },
+      "description": "Configured tradable instruments belonging to the user."
+    },
+    "/users/{userId}/preferences/{prefId}": {
+      "schema": { "$ref": "#/entities/UserPreferences" },
+      "description": "User preferences and logger configuration."
+    },
+    "/users/{userId}/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Structured daily, weekly, monthly, and strategy reviews."
+    },
+    "/users/{userId}/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Audit logs for export, import, and recovery actions."
+    }
+  }
+}

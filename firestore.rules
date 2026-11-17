@@ -1,0 +1,823 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isStr(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    function isOptStr(data, field, maxLen) {
+      return !(field in data) || data[field] == null || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isOptNum(data, field) {
+      return !(field in data) || data[field] == null || (data[field] is number);
+    }
+
+    function isOptBool(data, field) {
+      return !(field in data) || data[field] == null || (data[field] is bool);
+    }
+
+    function isOptStrList(data, field, maxItems) {
+      return !(field in data) || data[field] == null || (
+        data[field] is list &&
+        data[field].size() <= maxItems &&
+        (data[field].size() > 0 ? data[field][0] is string : true)
+      );
+    }
+
+    function isOptMapList(data, field, maxItems) {
+      return !(field in data) || data[field] == null || (
+        data[field] is list &&
+        data[field].size() <= maxItems &&
+        (data[field].size() > 0 ? data[field][0] is map : true)
+      );
+    }
+
+    function isOptMap(data, field, maxKeys) {
+      return !(field in data) || data[field] == null || (data[field] is map && data[field].size() <= maxKeys);
+    }
+
+    function parentUserExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId))
+        || existsAfter(/databases/$(database)/documents/users/$(userId));
+    }
+
+    // --- Entity Validation Blueprints ---
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'email', 'displayName', 'timezone', 'currency', 'theme', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'email', 'displayName', 'timezone', 'currency', 'theme',
+          'sourceApplication', 'sourceCreatedAt', 'sourceUpdatedAt', 'unknownFields',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == userId
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && isStr(data.email, 254)
+        && isStr(data.displayName, 120)
+        && isStr(data.timezone, 80)
+        && isStr(data.currency, 12)
+        && data.theme in ['light', 'dark']
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptStr(data, 'sourceUpdatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidTradingAccount(data, userId, accountId) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'accountType', 'currency', 'initialBalance', 'defaultRiskPercent', 'isActive', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'name', 'broker', 'accountType', 'currency', 'initialBalance',
+          'defaultRiskPercent', 'isActive', 'notes', 'sourceApplication',
+          'sourceCreatedAt', 'sourceUpdatedAt', 'unknownFields', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == accountId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isStr(data.name, 100) && data.name.size() >= 1
+        && isOptStr(data, 'broker', 100)
+        && data.accountType in ['personal', 'funded', 'demo', 'paper']
+        && isStr(data.currency, 12)
+        && data.initialBalance is number
+        && data.defaultRiskPercent is number
+        && data.isActive is bool
+        && isOptStr(data, 'notes', 2000)
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptStr(data, 'sourceUpdatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidDailyJournal(data, userId, journalId) {
+      return data.keys().hasAll(['id', 'userId', 'date', 'timezone', 'checklistItems', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'date', 'timezone', 'plannedActivities', 'morningNotes',
+          'dailyEmotionalState', 'disciplineRating', 'checklistItems', 'dailyReflection',
+          'sourceApplication', 'sourceCreatedAt', 'sourceUpdatedAt', 'unknownFields',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == journalId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isStr(data.date, 16)
+        && isStr(data.timezone, 80)
+        && isOptStr(data, 'plannedActivities', 4000)
+        && isOptStr(data, 'morningNotes', 8000)
+        && isOptStr(data, 'dailyEmotionalState', 120)
+        && isOptNum(data, 'disciplineRating')
+        && data.checklistItems is list && data.checklistItems.size() <= 50
+        && (data.checklistItems.size() == 0 || data.checklistItems[0] is map)
+        && isOptStr(data, 'dailyReflection', 8000)
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptStr(data, 'sourceUpdatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidTradingSession(data, userId, sessionId) {
+      return data.keys().hasAll([
+          'id', 'userId', 'date', 'sessionName', 'timezone', 'attendanceStatus',
+          'status', 'steppedBackCount', 'linkedTradeCount', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'userId', 'date', 'sessionName', 'sessionCategory', 'sessionTemplateId', 'timezone',
+          'plannedStart', 'plannedEnd', 'actualStart', 'actualEnd',
+          'attendanceStatus', 'arrivalDelayMinutes', 'earlyDepartureMinutes',
+          'setupAvailability', 'sittingLocation', 'sittingLocationOther',
+          'preSessionEmotion', 'preSessionEmotionNote', 'preSessionPreparation', 'sessionBias',
+          'sessionEmotions', 'postSessionEmotions', 'sessionChecklist',
+          'sessionNotes', 'observations', 'steppedBackCount', 'linkedTradeCount',
+          'sessionSummary', 'planAdherence', 'closingReflection', 'status',
+          'sourceApplication', 'sourceCreatedAt', 'sourceUpdatedAt', 'unknownFields',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == sessionId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isStr(data.date, 16)
+        && isStr(data.sessionName, 140) && data.sessionName.size() >= 1
+        && (!('sessionCategory' in data) || data.sessionCategory in ['standard', 'custom'])
+        && isOptStr(data, 'sessionTemplateId', 128)
+        && isStr(data.timezone, 80)
+        && isOptStr(data, 'plannedStart', 64)
+        && isOptStr(data, 'plannedEnd', 64)
+        && isOptStr(data, 'actualStart', 64)
+        && isOptStr(data, 'actualEnd', 64)
+        && data.attendanceStatus in ['pending', 'attended', 'late', 'early_exit', 'missed', 'cancelled']
+        && isOptNum(data, 'arrivalDelayMinutes')
+        && isOptNum(data, 'earlyDepartureMinutes')
+        && (!('setupAvailability' in data) || data.setupAvailability in ['unknown', 'a_plus', 'valid', 'mixed', 'no_valid_setup'])
+        && isOptStr(data, 'sittingLocation', 80)
+        && isOptStr(data, 'sittingLocationOther', 140)
+        && isOptStr(data, 'preSessionEmotion', 80)
+        && isOptStr(data, 'preSessionEmotionNote', 500)
+        && isOptStr(data, 'preSessionPreparation', 4000)
+        && isOptStr(data, 'sessionBias', 200)
+        && isOptStrList(data, 'sessionEmotions', 20)
+        && isOptStrList(data, 'postSessionEmotions', 20)
+        && isOptMapList(data, 'sessionChecklist', 50)
+        && isOptStr(data, 'sessionNotes', 8000)
+        && isOptStr(data, 'observations', 8000)
+        && data.steppedBackCount is number && data.steppedBackCount >= 0
+        && data.linkedTradeCount is number && data.linkedTradeCount >= 0
+        && isOptStr(data, 'sessionSummary', 4000)
+        && (!('planAdherence' in data) || data.planAdherence in ['pending', 'followed', 'partial', 'deviated'])
+        && isOptStr(data, 'closingReflection', 8000)
+        && data.status in ['planned', 'live', 'completed', 'missed', 'cancelled']
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptStr(data, 'sourceUpdatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidSessionEvent(data, userId, eventId) {
+      return data.keys().hasAll(['id', 'userId', 'sessionId', 'eventType', 'label', 'timestamp', 'createdAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'sessionId', 'eventType', 'label', 'notes', 'emotion',
+          'timestamp', 'timezone', 'sourceApplication', 'sourceCreatedAt',
+          'unknownFields', 'createdAt'
+        ])
+        && isValidId(data.id) && data.id == eventId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isValidId(data.sessionId)
+        && isStr(data.eventType, 80)
+        && isStr(data.label, 200) && data.label.size() >= 1
+        && isOptStr(data, 'notes', 2000)
+        && isOptStr(data, 'emotion', 80)
+        && isStr(data.timestamp, 64)
+        && isOptStr(data, 'timezone', 80)
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidTrade(data, userId, tradeId) {
+      return data.keys().hasAll([
+          'id', 'userId', 'date', 'timezone', 'isOutOfSession', 'accountId',
+          'instrument', 'direction', 'status', 'result', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'tradeGroupId', 'userId', 'date', 'timezone', 'sessionId',
+          'isOutOfSession', 'accountId', 'instrument', 'market', 'direction',
+          'status', 'bias', 'timeframe', 'entryType', 'setupLabel',
+          'entryTimestamp', 'entryPrice', 'stopLoss', 'takeProfit',
+          'positionSize', 'plannedRisk', 'riskPercent',
+          'expectedProfitPercent', 'actualProfitPercent', 'tpOutcome', 'slOutcome', 'exitOutcome',
+          'entryReason', 'expectedOutcome', 'preEntryEmotion', 'confidence',
+          'antiBiasPauseCompleted', 'duringTradeDurationSeconds',
+          'exitTimestamp', 'exitPrice', 'exitReason', 'actualOutcome',
+          'grossPnl', 'commission', 'otherCharges', 'netPnl', 'realisedR',
+          'result', 'postExitEmotions', 'mistakes', 'lessons',
+          'disciplineQuestions', 'attachmentIds', 'sourceApplication',
+          'sourceCreatedAt', 'sourceUpdatedAt', 'unknownFields',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == tradeId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isOptStr(data, 'tradeGroupId', 128)
+        && isStr(data.date, 16)
+        && isStr(data.timezone, 80)
+        && isOptStr(data, 'sessionId', 128)
+        && data.isOutOfSession is bool
+        && isValidId(data.accountId)
+        && isStr(data.instrument, 40) && data.instrument.size() >= 1
+        && isOptStr(data, 'market', 40)
+        && data.direction in ['long', 'short']
+        && data.status in ['before_entry', 'during_trade', 'closed']
+        && isOptStr(data, 'bias', 120)
+        && isOptStr(data, 'timeframe', 24)
+        && isOptStr(data, 'entryType', 60)
+        && isOptStr(data, 'setupLabel', 120)
+        && isOptStr(data, 'entryTimestamp', 64)
+        && isOptNum(data, 'entryPrice')
+        && isOptNum(data, 'stopLoss')
+        && isOptNum(data, 'takeProfit')
+        && isOptNum(data, 'positionSize')
+        && isOptNum(data, 'plannedRisk')
+        && isOptNum(data, 'riskPercent')
+        && isOptNum(data, 'expectedProfitPercent')
+        && isOptNum(data, 'actualProfitPercent')
+        && (!('tpOutcome' in data) || data.tpOutcome == null || data.tpOutcome in ['pending', 'hit', 'partial', 'missed', 'not_used'])
+        && (!('slOutcome' in data) || data.slOutcome == null || data.slOutcome in ['pending', 'hit', 'trailed_be', 'moved', 'not_used'])
+        && (!('exitOutcome' in data) || data.exitOutcome == null || data.exitOutcome in ['take_profit', 'stop_loss', 'manual_exit', 'breakeven'])
+        && isOptStr(data, 'entryReason', 4000)
+        && isOptStr(data, 'expectedOutcome', 2000)
+        && isOptStr(data, 'preEntryEmotion', 80)
+        && isOptNum(data, 'confidence')
+        && isOptBool(data, 'antiBiasPauseCompleted')
+        && isOptNum(data, 'duringTradeDurationSeconds')
+        && isOptStr(data, 'exitTimestamp', 64)
+        && isOptNum(data, 'exitPrice')
+        && isOptStr(data, 'exitReason', 2000)
+        && isOptStr(data, 'actualOutcome', 2000)
+        && isOptNum(data, 'grossPnl')
+        && isOptNum(data, 'commission')
+        && isOptNum(data, 'otherCharges')
+        && isOptNum(data, 'netPnl')
+        && isOptNum(data, 'realisedR')
+        && data.result in ['pending', 'win', 'loss', 'breakeven']
+        && isOptStrList(data, 'postExitEmotions', 20)
+        && isOptStrList(data, 'mistakes', 20)
+        && isOptStr(data, 'lessons', 4000)
+        && isOptMap(data, 'disciplineQuestions', 15)
+        && isOptStrList(data, 'attachmentIds', 20)
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptStr(data, 'sourceUpdatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidTradeEvent(data, userId, eventId) {
+      return data.keys().hasAll(['id', 'userId', 'tradeId', 'phase', 'eventType', 'label', 'timestamp', 'createdAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'tradeId', 'phase', 'eventType', 'label', 'details',
+          'price', 'quantity', 'emotion', 'timestamp', 'timezone',
+          'sourceApplication', 'sourceCreatedAt', 'unknownFields', 'createdAt'
+        ])
+        && isValidId(data.id) && data.id == eventId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isValidId(data.tradeId)
+        && data.phase in ['before_entry', 'during_trade', 'exit']
+        && isStr(data.eventType, 80)
+        && isStr(data.label, 200) && data.label.size() >= 1
+        && isOptStr(data, 'details', 2000)
+        && isOptNum(data, 'price')
+        && isOptNum(data, 'quantity')
+        && isOptStr(data, 'emotion', 80)
+        && isStr(data.timestamp, 64)
+        && isOptStr(data, 'timezone', 80)
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidTradeGroup(data, userId, groupId) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'name', 'description', 'date', 'sourceApplication',
+          'sourceCreatedAt', 'sourceUpdatedAt', 'unknownFields', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == groupId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isStr(data.name, 140) && data.name.size() >= 1
+        && isOptStr(data, 'description', 2000)
+        && isOptStr(data, 'date', 16)
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptStr(data, 'sourceUpdatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidAttachment(data, userId, attachmentId) {
+      return data.keys().hasAll(['id', 'userId', 'entityType', 'entityId', 'filename', 'mimeType', 'sizeBytes', 'dataUrl', 'createdAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'entityType', 'entityId', 'filename', 'mimeType',
+          'sizeBytes', 'caption', 'dataUrl', 'sourceApplication',
+          'sourceCreatedAt', 'unknownFields', 'createdAt'
+        ])
+        && isValidId(data.id) && data.id == attachmentId
+        && data.userId == userId && data.userId == request.auth.uid
+        && data.entityType in ['trade', 'session', 'daily_journal', 'review']
+        && isValidId(data.entityId)
+        && isStr(data.filename, 200) && data.filename.size() >= 1
+        && isStr(data.mimeType, 80)
+        && data.sizeBytes is number && data.sizeBytes > 0 && data.sizeBytes <= 900000
+        && isOptStr(data, 'caption', 500)
+        && isStr(data.dataUrl, 900000)
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidSessionTemplate(data, userId, templateId) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'plannedStartTime', 'plannedEndTime', 'timezone', 'defaultChecklist', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'name', 'market', 'plannedStartTime', 'plannedEndTime',
+          'timezone', 'defaultChecklist', 'notes', 'unknownFields', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == templateId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isStr(data.name, 100) && data.name.size() >= 1
+        && isOptStr(data, 'market', 60)
+        && isStr(data.plannedStartTime, 16)
+        && isStr(data.plannedEndTime, 16)
+        && isStr(data.timezone, 80)
+        && data.defaultChecklist is list && data.defaultChecklist.size() <= 50
+        && (data.defaultChecklist.size() == 0 || data.defaultChecklist[0] is string)
+        && isOptStr(data, 'notes', 2000)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidChecklist(data, userId, checklistId) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'scope', 'items', 'isDefault', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'name', 'scope', 'items', 'isDefault',
+          'unknownFields', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == checklistId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isStr(data.name, 120) && data.name.size() >= 1
+        && data.scope in ['daily', 'session', 'pre_trade']
+        && data.items is list && data.items.size() <= 50
+        && (data.items.size() == 0 || data.items[0] is string)
+        && data.isDefault is bool
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidInstrument(data, userId, instrumentId) {
+      return data.keys().hasAll(['id', 'userId', 'symbol', 'market', 'isActive', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'symbol', 'name', 'market', 'tickSize', 'pointValue',
+          'defaultCommission', 'isActive', 'unknownFields', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == instrumentId
+        && data.userId == userId && data.userId == request.auth.uid
+        && isStr(data.symbol, 40) && data.symbol.size() >= 1
+        && isOptStr(data, 'name', 100)
+        && data.market in ['Forex', 'Futures', 'Indices', 'Equities', 'Crypto', 'Commodities', 'Options']
+        && isOptNum(data, 'tickSize')
+        && isOptNum(data, 'pointValue')
+        && isOptNum(data, 'defaultCommission')
+        && data.isActive is bool
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidUserPreferences(data, userId, prefId) {
+      return data.keys().hasAll(['id', 'userId', 'timeframes', 'setupLabels', 'entryTypes', 'sessionQuickActions', 'antiBiasPauseSeconds', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'timeframes', 'setupLabels', 'entryTypes',
+          'sessionQuickActions', 'antiBiasPauseSeconds', 'defaultAccountId',
+          'unknownFields', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == prefId
+        && data.userId == userId && data.userId == request.auth.uid
+        && data.timeframes is list && data.timeframes.size() <= 30 && (data.timeframes.size() == 0 || data.timeframes[0] is string)
+        && data.setupLabels is list && data.setupLabels.size() <= 50 && (data.setupLabels.size() == 0 || data.setupLabels[0] is string)
+        && data.entryTypes is list && data.entryTypes.size() <= 30 && (data.entryTypes.size() == 0 || data.entryTypes[0] is string)
+        && data.sessionQuickActions is list && data.sessionQuickActions.size() <= 40 && (data.sessionQuickActions.size() == 0 || data.sessionQuickActions[0] is string)
+        && data.antiBiasPauseSeconds is number && data.antiBiasPauseSeconds >= 0 && data.antiBiasPauseSeconds <= 300
+        && isOptStr(data, 'defaultAccountId', 128)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidReview(data, userId, reviewId) {
+      return data.keys().hasAll(['id', 'userId', 'reviewType', 'title', 'periodStart', 'periodEnd', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'reviewType', 'title', 'periodStart', 'periodEnd',
+          'strategyName', 'summary', 'tradingMistakes', 'lessonsLearned',
+          'behaviouralPatterns', 'improvementGoals', 'rating',
+          'sourceApplication', 'sourceCreatedAt', 'sourceUpdatedAt',
+          'unknownFields', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id == reviewId
+        && data.userId == userId && data.userId == request.auth.uid
+        && data.reviewType in ['daily', 'weekly', 'monthly', 'strategy']
+        && isStr(data.title, 200) && data.title.size() >= 1
+        && isStr(data.periodStart, 32)
+        && isStr(data.periodEnd, 32)
+        && isOptStr(data, 'strategyName', 120)
+        && isOptStr(data, 'summary', 8000)
+        && isOptStr(data, 'tradingMistakes', 4000)
+        && isOptStr(data, 'lessonsLearned', 4000)
+        && isOptStr(data, 'behaviouralPatterns', 4000)
+        && isOptStr(data, 'improvementGoals', 4000)
+        && isOptNum(data, 'rating')
+        && isOptStr(data, 'sourceApplication', 80)
+        && isOptStr(data, 'sourceCreatedAt', 64)
+        && isOptStr(data, 'sourceUpdatedAt', 64)
+        && isOptMap(data, 'unknownFields', 30);
+    }
+
+    function isValidAuditLog(data, userId, logId) {
+      return data.keys().hasAll(['id', 'userId', 'action', 'details', 'recordCount', 'timestamp', 'createdAt'])
+        && data.keys().hasOnly(['id', 'userId', 'action', 'details', 'recordCount', 'timestamp', 'createdAt'])
+        && isValidId(data.id) && data.id == logId
+        && data.userId == userId && data.userId == request.auth.uid
+        && data.action in ['export_backup', 'export_json', 'export_csv', 'export_xlsx', 'import_preview', 'import_commit', 'import_rollback', 'delete_record']
+        && isStr(data.details, 2000)
+        && data.recordCount is number && data.recordCount >= 0
+        && isStr(data.timestamp, 64);
+    }
+
+    // --- Collection Rules ---
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().id == existing().id
+        && incoming().userId == existing().userId
+        && !('createdAt' in incoming().diff(existing()).affectedKeys())
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'timezone', 'currency', 'theme', 'sourceUpdatedAt', 'unknownFields', 'updatedAt'
+        ]);
+      allow delete: if false;
+
+      match /accounts/{accountId} {
+        allow get: if isOwner(userId) && isValidId(accountId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(accountId)
+          && isValidTradingAccount(incoming(), userId, accountId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(accountId)
+          && isValidTradingAccount(incoming(), userId, accountId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'broker', 'accountType', 'currency', 'initialBalance',
+            'defaultRiskPercent', 'isActive', 'notes', 'sourceUpdatedAt',
+            'unknownFields', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(accountId);
+      }
+
+      match /daily_journals/{journalId} {
+        allow get: if isOwner(userId) && isValidId(journalId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(journalId)
+          && isValidDailyJournal(incoming(), userId, journalId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(journalId)
+          && isValidDailyJournal(incoming(), userId, journalId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'timezone', 'plannedActivities', 'morningNotes', 'dailyEmotionalState',
+            'disciplineRating', 'checklistItems', 'dailyReflection',
+            'sourceUpdatedAt', 'unknownFields', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(journalId);
+      }
+
+      match /sessions/{sessionId} {
+        allow get: if isOwner(userId) && isValidId(sessionId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(sessionId)
+          && isValidTradingSession(incoming(), userId, sessionId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(sessionId)
+          && isValidTradingSession(incoming(), userId, sessionId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && (
+            (
+              !(existing().status in ['completed', 'missed', 'cancelled'])
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'sessionName', 'sessionCategory', 'sessionTemplateId', 'timezone', 'plannedStart', 'plannedEnd',
+                'actualStart', 'actualEnd', 'attendanceStatus', 'arrivalDelayMinutes',
+                'earlyDepartureMinutes', 'setupAvailability', 'sittingLocation', 'sittingLocationOther',
+                'preSessionEmotion', 'preSessionEmotionNote', 'preSessionPreparation',
+                'sessionBias', 'sessionEmotions', 'postSessionEmotions', 'sessionChecklist',
+                'sessionNotes', 'observations', 'steppedBackCount', 'linkedTradeCount',
+                'sessionSummary', 'planAdherence', 'closingReflection', 'status',
+                'sourceUpdatedAt', 'unknownFields', 'updatedAt'
+              ])
+            )
+            ||
+            (
+              existing().status in ['completed', 'missed', 'cancelled']
+              && incoming().status == existing().status
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'linkedTradeCount', 'sessionNotes', 'observations', 'sessionSummary',
+                'closingReflection', 'postSessionEmotions', 'planAdherence',
+                'setupAvailability', 'attendanceStatus', 'sourceUpdatedAt',
+                'unknownFields', 'updatedAt'
+              ])
+            )
+          );
+        allow delete: if isOwner(userId) && isValidId(sessionId);
+      }
+
+      match /session_events/{eventId} {
+        allow get: if isOwner(userId) && isValidId(eventId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(eventId)
+          && isValidSessionEvent(incoming(), userId, eventId)
+          && incoming().createdAt == request.time
+          && parentUserExists(userId)
+          && (
+            exists(/databases/$(database)/documents/users/$(userId)/sessions/$(incoming().sessionId))
+            || existsAfter(/databases/$(database)/documents/users/$(userId)/sessions/$(incoming().sessionId))
+          );
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(eventId);
+      }
+
+      match /trades/{tradeId} {
+        allow get: if isOwner(userId) && isValidId(tradeId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(tradeId)
+          && isValidTrade(incoming(), userId, tradeId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(tradeId)
+          && isValidTrade(incoming(), userId, tradeId)
+          && !('id' in incoming().diff(existing()).affectedKeys())
+          && !('userId' in incoming().diff(existing()).affectedKeys())
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && !('sourceApplication' in incoming().diff(existing()).affectedKeys())
+          && !('sourceCreatedAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && (
+            existing().status != 'closed'
+            || (
+              !('status' in incoming().diff(existing()).affectedKeys())
+              && incoming().status == 'closed'
+            )
+          )
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'tradeGroupId', 'date', 'timezone', 'sessionId', 'isOutOfSession',
+            'accountId', 'instrument', 'market', 'direction', 'status', 'bias',
+            'timeframe', 'entryType', 'setupLabel', 'entryTimestamp', 'entryPrice',
+            'stopLoss', 'takeProfit', 'positionSize', 'plannedRisk', 'riskPercent',
+            'expectedProfitPercent', 'actualProfitPercent', 'tpOutcome', 'slOutcome', 'exitOutcome',
+            'entryReason', 'expectedOutcome', 'preEntryEmotion', 'confidence',
+            'antiBiasPauseCompleted', 'duringTradeDurationSeconds', 'exitTimestamp',
+            'exitPrice', 'exitReason', 'actualOutcome', 'grossPnl', 'commission',
+            'otherCharges', 'netPnl', 'realisedR', 'result', 'postExitEmotions',
+            'mistakes', 'lessons', 'disciplineQuestions', 'attachmentIds',
+            'sourceUpdatedAt', 'unknownFields', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(tradeId);
+      }
+
+      match /trade_events/{eventId} {
+        allow get: if isOwner(userId) && isValidId(eventId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(eventId)
+          && isValidTradeEvent(incoming(), userId, eventId)
+          && incoming().createdAt == request.time
+          && parentUserExists(userId)
+          && (
+            exists(/databases/$(database)/documents/users/$(userId)/trades/$(incoming().tradeId))
+            || existsAfter(/databases/$(database)/documents/users/$(userId)/trades/$(incoming().tradeId))
+          );
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(eventId);
+      }
+
+      match /trade_groups/{groupId} {
+        allow get: if isOwner(userId) && isValidId(groupId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(groupId)
+          && isValidTradeGroup(incoming(), userId, groupId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(groupId)
+          && isValidTradeGroup(incoming(), userId, groupId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'description', 'date', 'sourceUpdatedAt', 'unknownFields', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(groupId);
+      }
+
+      match /attachments/{attachmentId} {
+        allow get: if isOwner(userId) && isValidId(attachmentId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(attachmentId)
+          && isValidAttachment(incoming(), userId, attachmentId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(attachmentId);
+      }
+
+      match /session_templates/{templateId} {
+        allow get: if isOwner(userId) && isValidId(templateId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(templateId)
+          && isValidSessionTemplate(incoming(), userId, templateId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(templateId)
+          && isValidSessionTemplate(incoming(), userId, templateId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'market', 'plannedStartTime', 'plannedEndTime', 'timezone',
+            'defaultChecklist', 'notes', 'unknownFields', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(templateId);
+      }
+
+      match /checklists/{checklistId} {
+        allow get: if isOwner(userId) && isValidId(checklistId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(checklistId)
+          && isValidChecklist(incoming(), userId, checklistId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(checklistId)
+          && isValidChecklist(incoming(), userId, checklistId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'scope', 'items', 'isDefault', 'unknownFields', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(checklistId);
+      }
+
+      match /instruments/{instrumentId} {
+        allow get: if isOwner(userId) && isValidId(instrumentId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(instrumentId)
+          && isValidInstrument(incoming(), userId, instrumentId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(instrumentId)
+          && isValidInstrument(incoming(), userId, instrumentId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'symbol', 'name', 'market', 'tickSize', 'pointValue', 'defaultCommission',
+            'isActive', 'unknownFields', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(instrumentId);
+      }
+
+      match /preferences/{prefId} {
+        allow get: if isOwner(userId) && isValidId(prefId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(prefId)
+          && isValidUserPreferences(incoming(), userId, prefId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(prefId)
+          && isValidUserPreferences(incoming(), userId, prefId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'timeframes', 'setupLabels', 'entryTypes', 'sessionQuickActions',
+            'antiBiasPauseSeconds', 'defaultAccountId', 'unknownFields', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(prefId);
+      }
+
+      match /reviews/{reviewId} {
+        allow get: if isOwner(userId) && isValidId(reviewId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(reviewId)
+          && isValidReview(incoming(), userId, reviewId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(reviewId)
+          && isValidReview(incoming(), userId, reviewId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && !('createdAt' in incoming().diff(existing()).affectedKeys())
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'reviewType', 'title', 'periodStart', 'periodEnd', 'strategyName',
+            'summary', 'tradingMistakes', 'lessonsLearned', 'behaviouralPatterns',
+            'improvementGoals', 'rating', 'sourceUpdatedAt', 'unknownFields', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(reviewId);
+      }
+
+      match /audit_logs/{logId} {
+        allow get: if isOwner(userId) && isValidId(logId);
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(logId)
+          && isValidAuditLog(incoming(), userId, logId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+  }
+}

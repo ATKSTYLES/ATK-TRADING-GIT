@@ -1,0 +1,1182 @@
+# ATK DECK V2 — MASTER PERSONAL TRADING JOURNAL SYSTEM
+
+## PROJECT IDENTITY
+
+**Product Name:** ATK Deck  
+**Version:** Version 2  
+**Product Type:** Personal Trading Journal and Performance Management System  
+**Owner:** ATK Deck  
+**Primary Purpose:** Personal trading, session management, trade recording, psychology tracking, discipline measurement and performance analytics.
+
+## CORE PROJECT VISION
+
+Build a complete personal trading journal called ATK Deck V2.
+
+The application must reproduce the complete functionality, design language, page structure, workflows and user experience of the existing Hyper Tracker Commercial application.
+
+The commercial version is the reference product and visual source of truth.
+
+I want the personal version to have the same product experience, but without commercial functionality.
+
+This is not a simplified trading journal.
+
+It must retain the complete trading functionality of the commercial application.
+
+The most important architectural requirement is that the application must have a permanent, portable and independently managed personal data system.
+
+I must be able to:
+
+- Publish new versions without losing personal data.
+- Rebuild the frontend without resetting the database.
+- Change hosting providers without losing data.
+- Export my complete trading history.
+- Import that history into another compatible application.
+- Move from ATK Deck Personal to Hyper Tracker Commercial.
+- Move from Hyper Tracker Commercial to ATK Deck Personal.
+- Keep both applications completely independent.
+- Never require a live connection between the two applications.
+
+**The data must belong to the user, not to a particular website, frontend, hosting provider or application deployment.**
+
+---
+
+# PART 1 — SYSTEM ARCHITECTURE
+
+Build the application using four independent architectural layers.
+
+### Layer 1: User Interface
+
+Contains:
+
+- Dashboard
+- Daily Journal
+- Sessions
+- Trades
+- Calendar
+- Analytics
+- Reviews
+- Live Engagement
+- Settings and Export
+
+This layer can be redesigned or redeveloped without affecting personal records.
+
+### Layer 2: Application Logic
+
+Contains:
+
+- Trading calculations
+- Session lifecycle management
+- Trade lifecycle management
+- Event recording
+- Analytics calculations
+- Validation rules
+- Account management
+- Import and export operations
+
+This layer must follow a stable set of documented business rules.
+
+### Layer 3: Data Storage
+
+Contains all persistent personal records:
+
+- User profile
+- Trading accounts
+- Daily journals
+- Trading sessions
+- Trade records
+- Session event timelines
+- Trade event timelines
+- Screenshots and attachments
+- Session templates
+- Checklists
+- Instruments
+- Preferences
+- Settings
+
+This layer must operate independently of the application deployment.
+
+### Layer 4: Universal Data Portability
+
+A dedicated data exchange system that allows personal records to move between compatible versions of ATK Deck and Hyper Tracker.
+
+It must use a documented, versioned data format.
+
+It must not require the two applications to communicate with one another.
+
+---
+
+# PART 2 — DESIGN LANGUAGE AND VISUAL CONSISTENCY
+
+The existing commercial Hyper Tracker is the design reference.
+
+Before development, inspect the commercial version and reproduce its existing visual system.
+
+Do not independently invent a new design.
+
+Preserve:
+
+- Typography
+- Font hierarchy
+- Colours
+- Light and dark themes
+- Sidebar design
+- Navigation structure
+- Spacing
+- Page widths
+- Cards
+- Tables
+- Forms
+- Buttons
+- Modals
+- Charts
+- Calendar design
+- Responsive behaviour
+- Component styling
+- Interaction patterns
+
+The personal version should feel like the same product.
+
+### Design principles
+
+- Minimalist.
+- Professional.
+- Notion-inspired.
+- Fast.
+- Clean.
+- Easy to understand.
+- Consistent.
+- No unnecessary decoration.
+
+Avoid:
+
+- Heavy animations.
+- Excessive gradients.
+- Unnecessary shadows.
+- Oversized headings.
+- Excessive rounded cards.
+- Unnecessary loading effects.
+- Large third-party UI libraries.
+- Duplicate components.
+
+Create and maintain a documented design system containing:
+
+1. Colour tokens.
+2. Typography tokens.
+3. Spacing scale.
+4. Component definitions.
+5. Button variants.
+6. Form styles.
+7. Card styles.
+8. Table styles.
+9. Navigation styles.
+10. Chart styles.
+11. Light and dark theme rules.
+12. Responsive layout rules.
+
+The design system must be reusable in future ATK Deck and Hyper Tracker versions.
+
+---
+
+# PART 3 — COMPLETE APPLICATION FEATURES
+
+The following features must be implemented as the standard ATK Deck blueprint.
+
+Do not remove or simplify any of them.
+
+## 3.1 Dashboard
+
+Display:
+
+- Daily trading summary.
+- Monthly performance.
+- Total trades.
+- Win rate.
+- Net P&L.
+- Profit factor.
+- Average R.
+- Trading sessions.
+- Session attendance.
+- Discipline statistics.
+- Recent trading activity.
+- Important performance trends.
+
+All metrics must derive from actual saved records.
+
+## 3.2 Daily Journal
+
+Maintain a separate day-level journal.
+
+Fields include:
+
+- Date.
+- Planned activities.
+- Morning notes.
+- Daily emotional state.
+- Discipline rating.
+- Daily checklist.
+- Daily reflection.
+
+Default checklist:
+
+- Meditation.
+- Exercise.
+- Visualization.
+- Oxygenation.
+- Reading.
+
+Daily checklist completion must persist across all trading sessions on that date.
+
+Do not reset the daily checklist when a new session begins.
+
+## 3.3 Sessions
+
+Sessions must be independent records.
+
+Each session has:
+
+- Session ID.
+- User ID.
+- Date.
+- Session name.
+- Session template.
+- Timezone.
+- Planned start and end.
+- Actual start and end.
+- Attendance status.
+- Arrival delay.
+- Early departure.
+- Setup availability.
+- Pre-session preparation.
+- Session bias.
+- Session emotions.
+- Session checklist.
+- Session notes.
+- Observations.
+- Stepped Back count.
+- Linked trade count.
+- Session summary.
+- Plan adherence.
+- Closing reflection.
+- Session lifecycle status.
+
+Session lifecycle:
+
+- Planned.
+- Live.
+- Completed.
+- Missed.
+- Cancelled.
+
+Attendance and completion must remain separate concepts.
+
+An attended session with zero trades must remain an attended session, not a missed session.
+
+A session may contain zero, one or multiple trades.
+
+### Session lifecycle
+
+When the user starts a session:
+
+- Generate a unique session ID.
+- Record the actual start timestamp.
+- Start the session timer.
+- Create the active session logger.
+- Begin the session event timeline.
+
+When the user ends a session:
+
+- Open the closing modal.
+- Record actual end time.
+- Capture setup availability.
+- Capture attendance.
+- Capture plan adherence.
+- Capture post-session emotions.
+- Capture closing reflection.
+
+Save the complete session timeline permanently.
+
+## 3.4 Trades
+
+Trades must remain independent records linked to sessions when applicable.
+
+A trade can also be explicitly out-of-session.
+
+Each trade contains:
+
+- Trade ID.
+- Trade group ID, where applicable.
+- User ID.
+- Date.
+- Linked session ID.
+- Trading account.
+- Instrument.
+- Market.
+- Direction.
+- Status.
+- Bias.
+- Timeframe.
+- Entry type.
+- Setup label.
+- Entry timestamp.
+- Entry price.
+- Stop loss.
+- Take profit.
+- Position size.
+- Planned risk.
+- Risk percentage.
+- Entry reason.
+- Expected outcome.
+- Pre-entry emotion.
+- Confidence.
+- Anti-bias pause status.
+- During-trade duration.
+- Event timeline.
+- Execution actions.
+- Emotion changes.
+- Stop-loss adjustments.
+- Take-profit adjustments.
+- Partial closes.
+- Position additions.
+- Market observations.
+- Exit timestamp.
+- Exit price.
+- Exit reason.
+- Actual outcome.
+- Gross P&L.
+- Commission.
+- Other charges.
+- Net P&L.
+- Realised R.
+- Result.
+- Post-exit emotions.
+- Mistakes.
+- Lessons.
+- Discipline questions.
+- Screenshots.
+
+Trade lifecycle:
+
+- Before Entry.
+- During Trade.
+- Exit/Closed.
+
+A trade must preserve its complete timeline after closure.
+
+Closing a trade must clear only the active trade panel. The parent session must continue running.
+
+## 3.5 Live Engagement
+
+Maintain the two-panel live logging system.
+
+### Left panel: Live Logger
+
+Automatically switch between:
+
+- Session Logger.
+- Trade Logger.
+
+Session logger should provide quick actions such as:
+
+- Levels Marked Cleanly.
+- Waiting for Setup.
+- No Valid Setup.
+- Choppy Market.
+- FOMO Resisted.
+- Calm & Present.
+- Fatigued/Distracted.
+- Impatient.
+- Changed Bias.
+- Stepped Back.
+- Custom Observation.
+
+Trade logger should contain:
+
+- Before Entry.
+- During Trade.
+- Exit.
+
+### Right panel: Live Recording Window
+
+Show:
+
+- Active recording context.
+- Timer.
+- Session or trade information.
+- Timestamped event timeline.
+
+Every event must belong to exactly one recording context.
+
+Session events must never accidentally become trade events.
+
+Trade events must never accidentally become session events.
+
+## 3.6 Calendar
+
+Use a monthly Monday-to-Sunday calendar.
+
+Show:
+
+- Profitable day.
+- Losing day.
+- Breakeven day.
+- Attended with no trade.
+- Missed session.
+- No session planned.
+- No record.
+
+Display daily P&L, trade count and session attendance.
+
+Below the calendar, show monthly financial, activity and discipline summaries.
+
+Clicking a day must open that day's journal.
+
+## 3.7 Analytics
+
+Include:
+
+Financial analytics:
+
+- Net P&L.
+- Win rate.
+- Profit factor.
+- Expectancy.
+- Average win.
+- Average loss.
+- Largest win.
+- Largest loss.
+- Average R.
+- Drawdown.
+- Winning and losing streaks.
+
+Activity analytics:
+
+- Planned sessions.
+- Attended sessions.
+- Missed sessions.
+- Zero-trade sessions.
+- Session adherence.
+- Valid setup rate.
+- Out-of-session trades.
+
+Discipline analytics:
+
+- Followed plan.
+- Followed risk rules.
+- Impulsive entries.
+- Exited per plan.
+- Stepped Back count.
+- Checklist completion.
+
+Psychology analytics:
+
+- Focused versus distracted.
+- Calm versus anxious.
+- Trades after losses.
+- Impulsive versus planned entries.
+- Confidence versus results.
+- Emotional state before and after wins/losses.
+
+Always show sample sizes.
+
+Do not invent missing values.
+
+Do not infer emotions that were never recorded.
+
+Do not treat correlation as causation.
+
+Separate financial outcome from execution quality.
+
+## 3.8 Reviews
+
+Maintain structured reviews for:
+
+- Daily review.
+- Weekly review.
+- Monthly review.
+- Strategy review.
+- Trading mistakes.
+- Lessons learned.
+- Behavioural patterns.
+- Improvement goals.
+
+All review records must remain exportable.
+
+## 3.9 Settings and Export
+
+Include:
+
+- Profile.
+- Trading accounts.
+- Checklists.
+- Instruments.
+- Timeframes.
+- Session templates.
+- Logger settings.
+- Timezone.
+- Currency.
+- Theme.
+- Export.
+- Import.
+- Backup and restore.
+
+Retain the configurable trading templates and settings.
+
+---
+
+# PART 4 — THE UNIVERSAL DATA STANDARD
+
+This is the most important part of the entire system.
+
+Create a documented data standard called:
+
+**ATK Universal Trading Data Standard (ATK-UTDS).**
+
+Every ATK Deck and Hyper Tracker version must use this standard.
+
+The standard must define:
+
+- Entity names.
+- Field names.
+- Field types.
+- Required fields.
+- Optional fields.
+- Relationships.
+- Unique identifiers.
+- Timestamps.
+- Timezones.
+- Currency handling.
+- File references.
+- Event structures.
+- Validation rules.
+- Schema versioning.
+
+### Required entities
+
+At minimum, define:
+
+1. User Profile.
+2. Trading Account.
+3. Daily Journal.
+4. Trading Session.
+5. Session Event.
+6. Trade.
+7. Trade Event.
+8. Trade Group.
+9. Screenshot/Attachment.
+10. Session Template.
+11. Checklist.
+12. Instrument.
+13. User Preferences.
+14. Review.
+15. Export Manifest.
+
+### Universal identifiers
+
+Every record must have a stable unique ID.
+
+Use UUIDs or another documented globally unique identifier format.
+
+Do not generate new IDs simply because the user moves data between websites.
+
+Preserve original IDs during import whenever possible.
+
+Preserve:
+
+- Creation timestamp.
+- Last modification timestamp.
+- Original timezone.
+- Record relationships.
+- Original source application.
+- Original account references.
+
+### Relationships
+
+A session may contain multiple trades.
+
+A trade may belong to one session or be out-of-session.
+
+A daily journal may relate to multiple sessions.
+
+Events must belong to exactly one session or one trade.
+
+Screenshots must retain their original association.
+
+All relationships must survive export and import.
+
+### Versioning
+
+Every data package must include:
+
+- Format name.
+- Format version.
+- Export timestamp.
+- Source application.
+- Source application version.
+- User-defined export scope.
+- Record counts.
+- Attachment counts.
+- Integrity information.
+
+Example:
+
+`format: ATK-UTDS`
+
+`format_version: 1.0.0`
+
+The application must recognise compatible versions and provide migration support when the format changes.
+
+Never silently discard fields that are not understood.
+
+Unknown fields should be preserved where possible, or clearly reported before import.
+
+---
+
+# PART 5 — UNIVERSAL EXPORT SYSTEM
+
+Create a full data export system.
+
+The user should be able to download their entire trading history in a portable package.
+
+### Full export must contain
+
+- User profile.
+- Trading accounts.
+- Daily journals.
+- Sessions.
+- Trades.
+- Session timelines.
+- Trade timelines.
+- Screenshots.
+- Attachments.
+- Checklists.
+- Session templates.
+- Instruments.
+- Preferences.
+- Reviews.
+- Supporting metadata.
+
+### Recommended export package
+
+Create a ZIP archive containing:
+
+`ATK_Trading_Backup.zip`
+
+Inside:
+
+`manifest.json`
+
+`profile.json`
+
+`accounts.json`
+
+`daily_journals.json`
+
+`sessions.json`
+
+`session_events.json`
+
+`trades.json`
+
+`trade_events.json`
+
+`trade_groups.json`
+
+`reviews.json`
+
+`settings.json`
+
+`templates.json`
+
+`instruments.json`
+
+`attachments/`
+
+The actual package structure may evolve, but it must be documented and backward compatible.
+
+### Export options
+
+Provide:
+
+1. Complete Backup — all personal data and attachments.
+2. Trading Records — trades, sessions and journals.
+3. Selected Date Range — user-defined period.
+4. JSON Export — machine-readable records.
+5. CSV Export — appropriate tabular records.
+6. Excel Export — genuine XLSX format if supported.
+
+The complete backup must preserve relationships and attachments, not merely export flat spreadsheets.
+
+---
+
+# PART 6 — UNIVERSAL IMPORT SYSTEM
+
+The import system must accept valid ATK-UTDS packages from:
+
+- ATK Deck Personal.
+- Hyper Tracker Commercial.
+- Future ATK Deck versions.
+- Other applications that implement the documented standard.
+
+### Import workflow
+
+Step 1: Select backup file.
+
+Step 2: Validate archive and manifest.
+
+Step 3: Verify format and version compatibility.
+
+Step 4: Inspect records and attachments.
+
+Step 5: Show an import preview.
+
+Step 6: Show the number of records to be imported.
+
+Step 7: Identify duplicate IDs and conflicting records.
+
+Step 8: Ask the user to confirm the import.
+
+Step 9: Import records safely.
+
+Step 10: Show the import summary.
+
+### Import summary
+
+Show:
+
+- Total records detected.
+- Records successfully imported.
+- Existing records skipped.
+- Duplicate records detected.
+- Records requiring attention.
+- Attachments imported.
+- Errors, if any.
+
+### Duplicate protection
+
+Use stable IDs to prevent duplicate records.
+
+If an ID already exists:
+
+- Do not blindly overwrite the existing record.
+- Compare modification timestamps and content.
+- Show the conflict.
+- Allow the user to choose an appropriate resolution.
+
+Support:
+
+- Skip existing records.
+- Import as a separate copy with new IDs and remapped relationships.
+- Replace existing records only after explicit confirmation.
+
+If the user selects a full migration into an empty destination, preserve the original IDs and relationships.
+
+### Transaction safety
+
+Import must be recoverable.
+
+If the import fails midway:
+
+- Do not leave partially connected records.
+- Roll back the import where the storage system supports transactions.
+- Otherwise use an import staging process and a recoverable commit mechanism.
+
+Never delete existing records during a failed import.
+
+---
+
+# PART 7 — COMPLETE DATA INDEPENDENCE
+
+ATK Deck Personal and Hyper Tracker Commercial must remain completely separate.
+
+This is a strict architectural requirement.
+
+### No automatic connections
+
+Do not implement:
+
+- Live database sharing.
+- Cross-website data synchronisation.
+- Automatic account linking.
+- Shared workspace access.
+- Background cross-application imports.
+- Automatic record propagation.
+
+### Separate databases
+
+ATK Deck Personal must use its own independent database and storage.
+
+Hyper Tracker Commercial must use its own separate database and storage.
+
+Each deployment must have:
+
+- Separate database credentials.
+- Separate authentication configuration.
+- Separate storage permissions.
+- Separate environment variables.
+- Separate deployment configuration.
+
+The applications may implement the same data standard, but they must never share a live database.
+
+### Manual migration only
+
+Example:
+
+ATK Deck Personal → Export backup → Download ZIP → Hyper Tracker Commercial → Import backup.
+
+The reverse must work equally well.
+
+Once imported, the destination maintains its own independent copy.
+
+Changes made afterward in one application must not appear in the other.
+
+---
+
+# PART 8 — PERMANENT DATA STORAGE
+
+The application must never depend on the lifecycle of the frontend or hosting deployment for data persistence.
+
+Use the existing persistent storage infrastructure where appropriate.
+
+Inspect the current implementation before choosing or changing database services.
+
+### Storage principles
+
+- Database remains independent of frontend deployment.
+- Screenshots remain in persistent object storage.
+- Application updates never recreate the database.
+- Container replacement never deletes personal records.
+- Hosting changes never delete personal records.
+- Database schema changes use safe migrations.
+- Backups remain independent of the running application.
+
+Never store the only copy of trading history in:
+
+- Temporary memory.
+- Container local filesystem.
+- Temporary deployment directories.
+- Frontend state.
+- Browser localStorage alone.
+
+If browser storage is used for offline support, it must be treated as a cache or temporary local copy with clear synchronisation rules, not the only authoritative copy.
+
+### Database migration rules
+
+- No automatic destructive migration.
+- No automatic database reset.
+- No DROP TABLE or TRUNCATE operations during normal publishing.
+- No demo-data seeding into production.
+- No empty database replacement.
+- No overwriting production configuration with development configuration.
+
+Before a schema migration:
+
+1. Back up the existing database.
+2. Validate the backup.
+3. Apply a versioned migration.
+4. Verify record counts and relationships.
+5. Confirm the application works.
+6. Retain a recovery path.
+
+---
+
+# PART 9 — BACKUP AND RECOVERY
+
+Build a reliable personal backup process.
+
+Provide:
+
+- Manual full backup.
+- Downloadable backup package.
+- Import and restore.
+- Backup validation.
+- Backup timestamps.
+- Record counts.
+- Attachment integrity checks.
+
+Where the hosting infrastructure supports scheduled database backups, enable them separately.
+
+Do not assume that a database backup automatically includes screenshots or attachments. Back up both.
+
+Do not claim a backup succeeded unless the file or database snapshot has actually been created and validated.
+
+---
+
+# PART 10 — SECURITY AND PRIVACY
+
+The system must follow strong security practices.
+
+No system can honestly guarantee absolute security, but implement appropriate protections and test them.
+
+Required protections:
+
+- Secure authentication.
+- Strong password and session protection.
+- Database access restricted to the correct owner.
+- Server-side authorisation.
+- Encryption in transit.
+- Encryption at rest where supported.
+- Secure secrets management.
+- Private attachment storage.
+- Signed or authenticated file access.
+- Protection against cross-user data access.
+- Audit records for important administrative and import operations.
+
+The owner must have control over their data.
+
+No other customer or administrator should automatically gain access to private trading records.
+
+Never expose database credentials or secret keys in frontend code.
+
+---
+
+# PART 11 — PERSONAL VERSION ONLY
+
+This is the personal ATK Deck version.
+
+Do not include:
+
+- Pricing pages.
+- Subscription plans.
+- Free trial.
+- Payment gateway.
+- UPI payment.
+- Customer management.
+- Commercial revenue dashboard.
+- SaaS administration.
+- Marketing pages.
+- Public registration.
+- Commercial onboarding.
+
+Keep:
+
+- Simple private login.
+- Main trading journal dashboard.
+- All existing trading features.
+- Settings.
+- Export and import.
+- Backup and restore.
+
+Use the existing personal authentication system wherever possible.
+
+---
+
+# PART 12 — PERFORMANCE
+
+Performance and simplicity are permanent product requirements.
+
+- Fast initial page load.
+- Minimal dependencies.
+- Efficient database queries.
+- Lazy-load screenshots and attachments.
+- Avoid loading all historical records unnecessarily.
+- Use pagination or date-based queries where appropriate.
+- Cache carefully without making stale data authoritative.
+- Keep the UI responsive.
+- Avoid unnecessary network requests.
+- Avoid large frontend bundles.
+
+Export and import operations should run independently of the normal live trading interface wherever possible.
+
+Do not introduce a large data-management framework unnecessarily.
+
+---
+
+# PART 13 — THE MASTER BLUEPRINT FOR FUTURE VERSIONS
+
+Create a permanent project documentation folder called:
+
+**ATK_DECK_SYSTEM_BLUEPRINT**
+
+It must contain the following documentation:
+
+### 1. PRODUCT_SPECIFICATION.md
+
+Defines the complete application features, pages and user workflows.
+
+### 2. DESIGN_SYSTEM.md
+
+Defines colours, typography, spacing, components, layouts and themes.
+
+### 3. DATA_DICTIONARY.md
+
+Defines every entity, field, data type and relationship.
+
+### 4. DATABASE_SCHEMA.md
+
+Documents the physical database schema and indexes.
+
+### 5. ATK_UTDS_SPECIFICATION.md
+
+Documents the universal export/import data standard.
+
+### 6. IMPORT_EXPORT_SPECIFICATION.md
+
+Defines export packages, import rules, validation and conflict handling.
+
+### 7. SECURITY_ARCHITECTURE.md
+
+Defines authentication, permissions, storage security and data ownership.
+
+### 8. DEPLOYMENT_GUIDE.md
+
+Explains deployment, environment variables, database persistence and safe publishing.
+
+### 9. MIGRATION_GUIDE.md
+
+Documents safe database and data-format upgrades.
+
+### 10. CHANGELOG.md
+
+Records all changes to the application, design system and data standard.
+
+### 11. ACCEPTANCE_CRITERIA.md
+
+Defines what must remain functional in every future version.
+
+### 12. PROJECT_STRUCTURE.md
+
+Documents folders, modules, components and dependencies.
+
+These files are the permanent reference for all future development.
+
+Every time the application is rebuilt, cloned, remixed, hosted elsewhere or redeveloped, these documents must be used as the source of truth.
+
+Do not allow future development to silently change the data model or design system.
+
+---
+
+# PART 14 — FUTURE DEVELOPMENT RULES
+
+Every future ATK Deck version must follow this process:
+
+1. Read the system blueprint.
+2. Inspect the current application.
+3. Identify changes required.
+4. Check whether the change affects the data schema.
+5. Check compatibility with ATK-UTDS.
+6. Preserve existing records.
+7. Apply safe migrations only when required.
+8. Preserve the design system.
+9. Update the documentation.
+10. Test data export and import compatibility.
+
+If a future feature changes the data standard, increment the schema version and provide a migration path.
+
+Never make a breaking change without documenting it.
+
+Never create a new database merely because a new frontend version is being developed.
+
+Never mix personal and commercial production environments.
+
+---
+
+# PART 15 — IMPLEMENTATION PHASES
+
+Do not attempt to make every architectural change in one uncontrolled operation.
+
+Implement in these phases.
+
+### Phase 1: Audit and protection
+
+- Inspect the existing commercial version.
+- Inspect the existing personal version.
+- Identify all existing features.
+- Identify the current database.
+- Identify storage locations.
+- Identify authentication.
+- Create a complete verified backup of personal data.
+- Document existing data structures.
+
+Do not make destructive changes during this phase.
+
+### Phase 2: Personal application construction
+
+- Create ATK Deck V2.
+- Reproduce the commercial version's design system.
+- Reproduce all trading functionality.
+- Remove commercial features.
+- Keep private authentication.
+
+### Phase 3: Universal data standard
+
+- Define ATK-UTDS.
+- Document every entity.
+- Standardise identifiers and relationships.
+- Implement schema versioning.
+- Create a complete data package structure.
+
+### Phase 4: Export and import
+
+- Implement full backup.
+- Implement JSON and CSV exports.
+- Implement complete archive export with attachments.
+- Implement import validation.
+- Implement duplicate detection.
+- Implement safe restoration.
+
+### Phase 5: Deployment protection
+
+- Separate application and data storage.
+- Verify persistent storage.
+- Protect production environment variables.
+- Remove destructive startup scripts.
+- Configure backups.
+- Test republishing without data loss.
+
+### Phase 6: Final verification
+
+Verify the full migration process:
+
+A. Export from ATK Deck Personal.
+
+B. Import into a separate Hyper Tracker Commercial test environment.
+
+C. Verify the imported trading history and relationships.
+
+D. Export from Hyper Tracker Commercial.
+
+E. Import into ATK Deck Personal or a clean compatible ATK Deck instance.
+
+F. Verify all records and attachments.
+
+G. Confirm that neither application is connected to the other after import.
+
+H. Publish a new application version and verify that its existing data remains intact.
+
+---
+
+# FINAL ACCEPTANCE REQUIREMENTS
+
+ATK Deck V2 is ready only when:
+
+1. It has the same trading functionality as the commercial reference application.
+2. It has the same design language and visual structure.
+3. It operates as an independent personal application.
+4. It has persistent and independently stored personal data.
+5. Publishing a new version does not reset records.
+6. Changing hosting does not require losing data.
+7. A complete backup can be downloaded.
+8. The backup contains all trading records and attachments.
+9. The backup can be imported into another compatible version.
+10. The commercial and personal versions can exchange data through manual export/import.
+11. Neither application has a live connection to the other.
+12. Existing identifiers and relationships remain intact after migration.
+13. The universal data standard is documented.
+14. The design system and application blueprint are documented.
+15. Future redevelopment can use these documents without inventing a new structure.
+
+## MOST IMPORTANT FINAL INSTRUCTION
+
+I do not want two interconnected websites.
+
+I want two independent applications that understand exactly the same trading-data format.
+
+My trading data must be portable, structured, recoverable and under my control.
+
+The application can change. The hosting can change. The frontend can be rebuilt. The commercial product can evolve.
+
+**My trading history must remain mine, and I must always be able to move it to another compatible application without losing its meaning, relationships, timestamps or attachments.**
+
+Prioritise data integrity, portability, design consistency, security and performance over adding new features.
+
+Do not make destructive changes or claim completion without verifying the actual implementation.

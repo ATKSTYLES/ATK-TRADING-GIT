@@ -1,0 +1,6 @@
+{
+  "name": "ATK Deck V2",
+  "description": "Personal trading journal, session & trade lifecycle logger, psychology & discipline analytics, and universal ATK-UTDS data portability system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
